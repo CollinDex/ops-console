@@ -65,3 +65,21 @@ def app(db: Session) -> FastAPI:
 def client(app: FastAPI) -> Iterator[TestClient]:
     with TestClient(app) as c:
         yield c
+
+
+@pytest.fixture
+def analyst_headers(client: TestClient, db: Session) -> dict[str, str]:
+    from app.models.enums import Role
+    from tests.factories import auth_header, make_staff
+
+    user = make_staff(db, role=Role.analyst, password="Passw0rd!test")
+    return auth_header(client, user.email, "Passw0rd!test")
+
+
+@pytest.fixture
+def viewer_headers(client: TestClient, db: Session) -> dict[str, str]:
+    from app.models.enums import Role
+    from tests.factories import auth_header, make_staff
+
+    user = make_staff(db, role=Role.viewer, password="Passw0rd!test")
+    return auth_header(client, user.email, "Passw0rd!test")
