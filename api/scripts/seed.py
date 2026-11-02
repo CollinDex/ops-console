@@ -153,6 +153,16 @@ def _unique_digits(
             return value
 
 
+# (minimum days, extra span, skew exponent): higher skew keeps more businesses near the minimum.
+STAGE_AGE_DAYS: dict[Stage, tuple[float, float, float]] = {
+    Stage.signed_up: (0, 10, 2.0),
+    Stage.documents_submitted: (0, 12, 2.0),
+    Stage.checks_in_progress: (1, 20, 1.5),
+    Stage.bank_linked: (1, 20, 2.0),
+    Stage.profile_ready: (10, 110, 1.3),
+}
+
+
 def _seed_businesses(db: Session, rng: random.Random, now: datetime, summary: SeedSummary) -> None:
     stages = [s for s, n in STAGE_COUNTS.items() for _ in range(n)]
     rng.shuffle(stages)
@@ -164,8 +174,12 @@ def _seed_businesses(db: Session, rng: random.Random, now: datetime, summary: Se
     stale_cutoff = now - timedelta(days=7)
 
     for stage in stages:
-        # Skewed towards recent days so sign-ups trend upwards.
-        created_at = now - timedelta(days=120 * rng.random() ** 1.8, seconds=rng.randint(0, 86399))
+        # Age depends on stage: a business that signed up months ago has usually moved on,
+        # so early stages are recent and profile-ready ones are older.
+        base, span, skew = STAGE_AGE_DAYS[stage]
+        created_at = now - timedelta(
+            days=base + span * rng.random() ** skew, seconds=rng.randint(0, 86399)
+        )
         created_at = min(created_at, now - timedelta(hours=1))
         sector = rng.choice(sectors)
         statuses = _check_statuses(rng, stage)
@@ -173,7 +187,7 @@ def _seed_businesses(db: Session, rng: random.Random, now: datetime, summary: Se
 
         last_sync: datetime | None = None
         if passed_bank:
-            if rng.random() < 0.2 and created_at < now - timedelta(days=8):
+            if rng.random() < 0.3 and created_at < now - timedelta(days=8):
                 last_sync = now - timedelta(days=rng.uniform(7.5, 30))
                 last_sync = max(last_sync, created_at)
             else:
