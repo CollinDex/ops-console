@@ -15,6 +15,8 @@ A working, polished shell: staff sign in, see navigation for their role, move ar
 - Fonts via `next/font/google`: **IBM Plex Sans** for UI (400/500/600) and **IBM Plex Mono** for identifiers and numbers (CAC, masked BVN, latency). Use `font-variant-numeric: tabular-nums` on numeric cells.
 - Status colours are semantic and separate from the brand: up/passed = emerald, slow/pending = amber, down/failed = red. **Never colour alone:** always pair it with an icon and text.
 
+> **Installed versions (from Phase 1):** Next 15.5, React 19.1, **zod 4** (use v4 syntax: `z.email()`, and the `error` option instead of `message`), **recharts 3**, **lucide-react 1**, and shadcn's `radix-nova` style with `cn` from the `cn` package. Check APIs against `node_modules`, not memory.
+
 ## 1. API layer (`src/lib/`)
 - **`api-types.ts`:** generate it with `pnpm gen:api` against the running API (from Phase 4) and commit it. Add a header comment saying it is generated and must not be edited by hand.
 - **`api-client.ts`**

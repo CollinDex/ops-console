@@ -73,7 +73,7 @@ CALL_TIMEOUT_S = 5.0
 **`POST /api/v1/providers/{name}/simulate`** (ops_admin only; action "change provider simulation")
 - Body `{"mode": "up"|"slow"|"down"}`. Calls `registry.get(name).set_mode(mode)`, writes the audit row `provider.simulate` (`target_type="provider"`, `target_id=name`, `details={"from": old, "to": new}`), commits, then `await ping_once(...)` for that provider so the panel updates straight away. Returns the provider's status object.
 
-**`/health` update:** add `"providers": {"up": n, "slow": n, "down": n}` from the latest pings. Overall `status` is `"degraded"` if any provider's latest ping is `slow` or `down`, but it is still HTTP 200. HTTP 503 is only for a DB outage.
+**`/health` update:** a DB outage now returns `status: "down"` (503). Phase 1 returned `"degraded"`, so fix that. Also add `"providers": {"up": n, "slow": n, "down": n}` from the latest pings. Overall `status` is `"degraded"` if any provider's latest ping is `slow` or `down`, but it is still HTTP 200. HTTP 503 is only for a DB outage.
 
 ## 4. Idempotent retry (`app/services/retry.py`, route in `routers/businesses.py`)
 **Route:** `POST /api/v1/businesses/{id}/checks/{check_type}/retry` (ops_admin only; action "re-run checks"). Declare it as a **sync `def`** route, so FastAPI runs it in a worker thread. From there, call the async provider with `anyio.from_thread.run(...)`. That keeps the sync SQLAlchemy session off the event loop.
