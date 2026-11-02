@@ -174,7 +174,8 @@ def _commit_outcome(
         replayed=False,
     )
     stored = db.get(IdempotencyKey, (key, actor_id))
-    assert stored is not None  # noqa: S101 - we own this row
+    if stored is None:  # we committed this row in _claim_key; losing it is a bug
+        raise RuntimeError("idempotency key row disappeared before the outcome was stored")
     stored.response_status = 200
     stored.response = out.model_dump(mode="json")
     db.commit()
