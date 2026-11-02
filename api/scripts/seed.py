@@ -18,12 +18,12 @@ from app.core.security import hash_password
 from app.db.base import Base
 from app.models import Business, StaffUser, VerificationCheck
 from app.models.enums import CheckStatus, CheckType, Role, Sector, Stage
+from app.services.catalog import FAILURE_REASONS
 from app.services.stage import derive_stage
 from scripts.seed_data import (
     ALL_STATES,
     BANKS,
     EXTRA_STAFF,
-    FAILURE_REASONS,
     FAILURE_WEIGHTS,
     FIRST_NAMES,
     HEAVY_STATES,

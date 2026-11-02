@@ -92,28 +92,6 @@ OTHER_STATES = [
 ]  # fmt: skip
 ALL_STATES = [*HEAVY_STATES, *OTHER_STATES]
 
-FAILURE_REASONS: dict[CheckType, list[str]] = {
-    CheckType.cac: [
-        "CAC number not found in registry",
-        "Company name does not match CAC record",
-        "Company status is inactive",
-    ],
-    CheckType.tin: [
-        "TIN not registered with FIRS",
-        "TIN does not match company name",
-    ],
-    CheckType.bvn: [
-        "BVN name does not match director",
-        "BVN date of birth mismatch",
-        "BVN record not found",
-    ],
-    CheckType.bank_link: [
-        "Account name does not match company name",
-        "Bank consent expired",
-        "Statement fetch timed out",
-    ],
-}
-
 # Failure weights: bvn > bank_link > cac > tin.
 FAILURE_WEIGHTS: dict[CheckType, int] = {
     CheckType.bvn: 4,

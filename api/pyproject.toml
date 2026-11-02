@@ -36,6 +36,7 @@ select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC", "S"]
 "tests/**" = ["S101", "S105", "S106", "S107", "S311"]
 "scripts/**" = ["S105", "S106", "S311"]
 "app/providers/simulator.py" = ["S311"]
+"app/providers/registry.py" = ["S311"]
 
 [tool.mypy]
 strict = true
