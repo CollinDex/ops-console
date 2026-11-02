@@ -578,7 +578,7 @@ Simulate mode is held in process memory, which is fine for a single-instance dep
 
 ## 9. Observability and reliability
 - **Structured logs:** JSON lines with `request_id` (taken from an incoming `X-Request-ID` header or generated), method, path, status, duration and actor id. The `request_id` also appears in error envelopes so a user report can be traced.
-- **Health:** `GET /health` returns `{"status": "ok" | "degraded", "db": "ok" | "down", "providers": {"up", "slow", "down"}, "version", "time"}`. `degraded` (still HTTP 200) means a provider's latest ping is slow or down. It returns 503 only when the database is down.
+- **Health:** `GET /health` returns `{"status": "ok" | "degraded" | "down", "db": "ok" | "down", "providers": {"up", "slow", "down"}, "version", "time"}`. `degraded` (still HTTP 200) means a provider's latest ping is slow or down. `down` with HTTP 503 means the database is unreachable.
 - **Provider degradation** is first-class data: the `provider_pings` history drives the status panel, 24 h uptime, and incident grouping (runs of consecutive non-`up` pings).
 - **Timeouts** on every provider call (5 s), and the pinger catches each provider separately so one hanging provider can't stall the others.
 - **Graceful shutdown:** the lifespan cancels the pinger task and closes the DB engine.
