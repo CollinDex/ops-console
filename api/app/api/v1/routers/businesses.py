@@ -1,23 +1,27 @@
-"""Businesses router: list, CSV export and detail. Retry arrives in Phase 4."""
+"""Businesses router: list, CSV export, detail, audit timeline and idempotent check retry."""
 
 import uuid
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, Query, Response
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import PaginationDep, clean_search
-from app.core.errors import NotFound, ValidationFailed
+from app.core.errors import IdempotencyKeyRequired, NotFound, ValidationFailed
 from app.core.security import require_roles
 from app.db.session import get_db
 from app.models import Business, StaffUser
-from app.models.enums import Role, Sector, Stage
+from app.models.enums import CheckType, Role, Sector, Stage
+from app.providers.registry import ProviderRegistry, get_registry
+from app.schemas.audit import AuditEntry
 from app.schemas.business import BusinessDetail, BusinessFilters, BusinessListItem
 from app.schemas.common import Page
+from app.schemas.retry import RetryOut
 from app.services import businesses as svc
-from app.services.audit import write_audit
+from app.services import retry as retry_svc
+from app.services.audit import list_for_business, write_audit
 
 router = APIRouter(prefix="/businesses", tags=["businesses"])
 
@@ -57,6 +61,13 @@ def get_filters(
 
 
 FiltersDep = Annotated[BusinessFilters, Depends(get_filters)]
+
+
+def _parse_id(business_id: str) -> uuid.UUID:
+    try:
+        return uuid.UUID(business_id)
+    except ValueError as exc:
+        raise NotFound("Business not found.") from exc
 
 
 @router.get("", response_model=Page[BusinessListItem])
@@ -114,11 +125,56 @@ def get_business(
     db: DbDep,
     _user: Annotated[StaffUser, Depends(require_roles(*_ROLES, action="view business details"))],
 ) -> BusinessDetail:
-    try:
-        parsed = uuid.UUID(business_id)
-    except ValueError as exc:
-        raise NotFound("Business not found.") from exc
-    business = db.get(Business, parsed)
+    business = db.get(Business, _parse_id(business_id))
     if business is None:
         raise NotFound("Business not found.")
     return svc.to_detail(business)
+
+
+@router.get("/{business_id}/audit", response_model=list[AuditEntry])
+def business_audit(
+    business_id: str,
+    db: DbDep,
+    _user: Annotated[StaffUser, Depends(require_roles(*_ROLES, action="view the audit log"))],
+) -> list[AuditEntry]:
+    parsed = _parse_id(business_id)
+    if db.get(Business, parsed) is None:
+        raise NotFound("Business not found.")
+    return list_for_business(db, parsed)
+
+
+# Sync on purpose: runs in a worker thread so the sync session never blocks the event loop.
+@router.post("/{business_id}/checks/{check_type}/retry", response_model=RetryOut)
+def retry_check(
+    business_id: str,
+    check_type: str,
+    response: Response,
+    db: DbDep,
+    registry: Annotated[ProviderRegistry, Depends(get_registry)],
+    user: Annotated[StaffUser, Depends(require_roles(Role.ops_admin, action="re-run checks"))],
+    idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+) -> RetryOut:
+    key = (idempotency_key or "").strip()
+    if not key:
+        raise IdempotencyKeyRequired()
+    if not retry_svc.key_is_valid(key):
+        raise ValidationFailed(
+            "The request is invalid.",
+            details=[
+                {
+                    "field": "header.Idempotency-Key",
+                    "message": "Must be 8-128 characters: letters, digits, '-' or '_'.",
+                }
+            ],
+        )
+    parsed = _parse_id(business_id)
+    try:
+        parsed_type = CheckType(check_type)
+    except ValueError as exc:
+        raise NotFound("Unknown check type.") from exc
+    result = retry_svc.retry_check(
+        db, registry, business_id=parsed, check_type=parsed_type, key=key, actor=user
+    )
+    if result.replayed:
+        response.headers["Idempotent-Replayed"] = "true"
+    return result

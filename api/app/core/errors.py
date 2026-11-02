@@ -76,6 +76,40 @@ class ValidationFailed(AppError):
     code = "validation_error"
 
 
+class IdempotencyKeyRequired(AppError):
+    status_code = 400
+    code = "idempotency_key_required"
+
+    def __init__(self, message: str = "The Idempotency-Key header is required.") -> None:
+        super().__init__(message)
+
+
+class IdempotencyKeyReused(AppError):
+    status_code = 422
+    code = "idempotency_key_reused"
+
+    def __init__(
+        self, message: str = "This Idempotency-Key was already used for a different request."
+    ) -> None:
+        super().__init__(message)
+
+
+class RequestInProgress(AppError):
+    status_code = 409
+    code = "request_in_progress"
+
+    def __init__(self, message: str = "This request is still being processed.") -> None:
+        super().__init__(message)
+
+
+class CheckNotRetryable(AppError):
+    status_code = 409
+    code = "check_not_retryable"
+
+    def __init__(self, message: str = "Only failed checks can be re-run.") -> None:
+        super().__init__(message)
+
+
 class InternalError(AppError):
     status_code = 500
     code = "internal_error"
