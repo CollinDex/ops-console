@@ -1,0 +1,7 @@
+{
+  "name": "credisure-docs-render",
+  "private": true,
+  "type": "module",
+  "scripts": { "render": "node render.mjs .. ../system-design.html" },
+  "dependencies": { "marked": "12.0.2" }
+}

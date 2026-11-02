@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+docs/_render/node_modules/
+
+# Env files (keep examples and the committed docker defaults)
+.env
+.env.*
+!.env.example
+!.env.docker
+
+# OS
+.DS_Store
