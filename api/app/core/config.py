@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     )
     jwt_secret: str = "dev-only-change-me"  # noqa: S105
     jwt_ttl_minutes: int = 60
+    bcrypt_rounds: int = 12
     cors_origins: list[str] = ["http://localhost:3000"]
     env: Literal["local", "test", "prod"] = "local"
     pinger_enabled: bool = True
