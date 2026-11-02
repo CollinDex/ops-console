@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: credisure
+      POSTGRES_PASSWORD: credisure
+      POSTGRES_DB: credisure
+    ports: ["5433:5432"] # 5433 on the host avoids clashing with other local Postgres instances
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U credisure"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  api:
+    build: ./api
+    env_file: ./api/.env.docker # committed: non-secret local defaults only
+    depends_on:
+      db:
+        condition: service_healthy
+    ports: ["8000:8000"]
+  web:
+    build:
+      context: ./web
+      args:
+        NEXT_PUBLIC_API_URL: "http://localhost:8000"
+    depends_on: [api]
+    ports: ["3000:3000"]
+
+volumes:
+  db-data: {}
