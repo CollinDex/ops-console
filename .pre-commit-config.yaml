@@ -1,11 +1,17 @@
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
+  - repo: local
     hooks:
       - id: ruff
-        args: [--fix]
+        name: ruff (locked version via uv)
+        entry: bash -c 'cd api && uv run ruff check --fix "${@#api/}"' --
+        language: system
+        types: [python]
         files: ^api/
       - id: ruff-format
+        name: ruff format (locked version via uv)
+        entry: bash -c 'cd api && uv run ruff format "${@#api/}"' --
+        language: system
+        types: [python]
         files: ^api/
   - repo: local
     hooks:
