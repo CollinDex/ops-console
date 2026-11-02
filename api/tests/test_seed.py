@@ -57,3 +57,34 @@ def test_seed_is_deterministic(db: Session) -> None:
     )
     assert first == second
     assert len(first) == 300
+
+
+def test_seed_pings_and_retry_audit(db: Session) -> None:
+    from app.models import AuditLog, ProviderPing
+    from app.models.enums import ProviderName
+    from app.services.providers import PingPoint, group_incidents
+
+    summary = run_seed(db, now=NOW)
+    assert summary.pings == 4 * 7 * 24 * 60
+    assert db.scalar(select(func.count()).select_from(ProviderPing)) == summary.pings
+    counts = {}
+    for name in ProviderName:
+        rows = db.execute(
+            select(ProviderPing.checked_at, ProviderPing.status)
+            .where(ProviderPing.provider == name)
+            .order_by(ProviderPing.checked_at)
+        ).all()
+        counts[name] = group_incidents([PingPoint(r.checked_at, r.status) for r in rows], NOW)
+    assert [(i.worst_status, i.duration_seconds) for i in counts[ProviderName.bvn]] == [
+        ("down", 25 * 60)
+    ]
+    assert [(i.worst_status, i.duration_seconds) for i in counts[ProviderName.open_banking]] == [
+        ("slow", 120 * 60)
+    ]
+    assert [(i.worst_status, i.duration_seconds) for i in counts[ProviderName.cac]] == [
+        ("down", 10 * 60)
+    ]
+    assert len(counts[ProviderName.tin]) == 2
+    assert summary.retry_audit == 12
+    retries = db.scalars(select(AuditLog).where(AuditLog.action == "check.retry")).all()
+    assert len(retries) == 12 and all(r.actor_id for r in retries)

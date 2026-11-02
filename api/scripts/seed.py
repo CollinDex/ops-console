@@ -9,15 +9,15 @@ import sys
 import uuid
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import func, select, text
+from sqlalchemy import func, insert, select, text
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
 from app.db.base import Base
-from app.models import Business, StaffUser, VerificationCheck
-from app.models.enums import CheckStatus, CheckType, Role, Sector, Stage
+from app.models import AuditLog, Business, ProviderPing, StaffUser, VerificationCheck
+from app.models.enums import CheckStatus, CheckType, PingStatus, ProviderName, Role, Sector, Stage
 from app.services.catalog import FAILURE_REASONS
 from app.services.stage import derive_stage
 from scripts.seed_data import (
@@ -60,6 +60,8 @@ class SeedSummary:
     stages: Counter[str] = field(default_factory=Counter)
     failed_by_type: Counter[str] = field(default_factory=Counter)
     stale_bank: int = 0
+    pings: int = 0
+    retry_audit: int = 0
 
     def render(self) -> str:
         lines = [
@@ -68,6 +70,7 @@ class SeedSummary:
             "failed checks: "
             + ", ".join(f"{k}={v}" for k, v in sorted(self.failed_by_type.items())),
             f"stale bank syncs (>7 days): {self.stale_bank}",
+            f"provider pings: {self.pings}  retry audit rows: {self.retry_audit}",
         ]
         return "\n".join(lines)
 
@@ -262,6 +265,106 @@ def _seed_businesses(db: Session, rng: random.Random, now: datetime, summary: Se
         summary.businesses += 1
 
 
+LAGOS = timezone(timedelta(hours=1))  # Africa/Lagos has no DST, so a fixed offset is exact
+PING_DAYS = 7
+PING_CHUNK = 5000
+RETRY_AUDIT_BUSINESSES = 12
+
+
+def _scripted_outages(now: datetime) -> dict[ProviderName, list[tuple[datetime, int, PingStatus]]]:
+    """(start, minutes, status) windows that make the incident history non-empty."""
+    yesterday = (now.astimezone(LAGOS) - timedelta(days=1)).replace(
+        hour=14, minute=10, second=0, microsecond=0
+    )
+    return {
+        ProviderName.bvn: [(yesterday, 25, PingStatus.down)],
+        ProviderName.open_banking: [(now - timedelta(days=3), 120, PingStatus.slow)],
+        ProviderName.cac: [(now - timedelta(days=5), 10, PingStatus.down)],
+        ProviderName.tin: [
+            (now - timedelta(days=2, hours=3), 2, PingStatus.slow),
+            (now - timedelta(days=4, hours=7), 2, PingStatus.slow),
+        ],
+    }
+
+
+def seed_pings(db: Session, now: datetime, rng: random.Random) -> int:
+    """Seven days of 1-minute pings per provider, bulk inserted, with scripted incidents."""
+    outages = _scripted_outages(now)
+    end = now.replace(second=0, microsecond=0)
+    total = PING_DAYS * 24 * 60
+    rows: list[dict[str, object]] = []
+    for provider in ProviderName:
+        windows = [
+            (start, start + timedelta(minutes=mins), st) for start, mins, st in outages[provider]
+        ]
+        for i in range(total):
+            checked_at = end - timedelta(minutes=i)
+            status = PingStatus.up
+            for start, stop, st in windows:
+                if start <= checked_at < stop:
+                    status = st
+            if status == PingStatus.down:
+                latency, error = None, "Connection refused (simulated)"
+            elif status == PingStatus.slow:
+                latency, error = rng.randint(1200, 2500), None
+            else:
+                latency, error = rng.randint(80, 250), None
+            rows.append(
+                {
+                    "provider": provider,
+                    "status": status,
+                    "latency_ms": latency,
+                    "error": error,
+                    "checked_at": checked_at,
+                }
+            )
+    for i in range(0, len(rows), PING_CHUNK):
+        db.execute(insert(ProviderPing), rows[i : i + PING_CHUNK])
+    return len(rows)
+
+
+def seed_retry_audit(db: Session, now: datetime, rng: random.Random) -> int:
+    """check.retry audit rows from the demo admin for businesses whose checks were re-run."""
+    admin = db.scalars(select(StaffUser).where(StaffUser.email == DEMO_STAFF[0][0])).one()
+    candidates = db.execute(
+        select(Business, VerificationCheck)
+        .join(VerificationCheck)
+        .where(VerificationCheck.attempts >= 2)
+        .order_by(Business.cac_number, VerificationCheck.type)
+        .limit(RETRY_AUDIT_BUSINESSES * 3)
+    ).all()
+    seen: set[uuid.UUID] = set()
+    count = 0
+    for business, check in candidates:
+        if business.id in seen:
+            continue
+        seen.add(business.id)
+        retry_time = min(
+            now - timedelta(minutes=5),
+            max(business.created_at, now - timedelta(days=6)) + timedelta(hours=rng.randint(1, 48)),
+        )
+        db.add(
+            AuditLog(
+                actor_id=admin.id,
+                action="check.retry",
+                target_type="business",
+                target_id=str(business.id),
+                details={
+                    "check": check.type.value,
+                    "result": "passed" if check.status == CheckStatus.passed else "failed",
+                    "failure_reason": check.failure_reason,
+                    "attempts": check.attempts,
+                    "idempotency_key": str(_uuid(rng)),
+                },
+                created_at=retry_time,
+            )
+        )
+        count += 1
+        if count >= RETRY_AUDIT_BUSINESSES:
+            break
+    return count
+
+
 def run_seed(db: Session, *, now: datetime, reset: bool = False) -> SeedSummary:
     """Fill the database. Does not commit, so tests can roll it back."""
     if reset:
@@ -273,6 +376,10 @@ def run_seed(db: Session, *, now: datetime, reset: bool = False) -> SeedSummary:
     summary = SeedSummary()
     summary.staff = len(_seed_staff(db, rng, now))
     _seed_businesses(db, rng, now, summary)
+    db.flush()
+    extra_rng = random.Random(SEED + 1)  # separate stream: businesses stay identical to Phase 3
+    summary.pings = seed_pings(db, now, extra_rng)
+    summary.retry_audit = seed_retry_audit(db, now, extra_rng)
     db.flush()
     return summary
 
