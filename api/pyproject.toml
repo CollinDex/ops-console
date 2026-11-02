@@ -6,6 +6,7 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic>=1.20.1",
     "bcrypt>=4.2",
+    "email-validator>=2.3.0",
     "fastapi>=0.162.0",
     "psycopg[binary]>=3.2",
     "pydantic>=2.9",
@@ -32,7 +33,7 @@ target-version = "py312"
 select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC", "S"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106", "S311"]
+"tests/**" = ["S101", "S105", "S106", "S107", "S311"]
 "scripts/**" = ["S105", "S106", "S311"]
 "app/providers/simulator.py" = ["S311"]
 
@@ -44,3 +45,4 @@ files = ["app"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --cov=app --cov-report=term-missing"
+markers = ["slow: slower tests that still run by default"]
