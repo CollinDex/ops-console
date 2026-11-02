@@ -17,3 +17,8 @@ def get_db() -> Iterator[Session]:
         yield db
     finally:
         db.close()
+
+
+def get_session_factory() -> sessionmaker[Session]:
+    """Dependency so background-style writes (the immediate ping) can be redirected in tests."""
+    return SessionLocal
