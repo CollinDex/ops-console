@@ -28,8 +28,14 @@ def test_export_header_filters_and_disposition(
         checks={CheckType.cac: CheckStatus.passed},
     )
     make_business(db, name="Shop One", sector=Sector.retail)
-    resp = client.get(URL, params={"sector": "agriculture"}, headers=analyst_headers)
+    resp = client.get(
+        URL,
+        params={"sector": "agriculture"},
+        headers={**analyst_headers, "Origin": "http://localhost:3000"},
+    )
     assert resp.status_code == 200
+    exposed = resp.headers["access-control-expose-headers"].lower()
+    assert "content-disposition" in exposed and "x-truncated" in exposed
     assert resp.headers["content-type"] == "text/csv; charset=utf-8"
     disposition = resp.headers["content-disposition"]
     assert disposition.startswith('attachment; filename="credisure-businesses-')
