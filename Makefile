@@ -1,6 +1,6 @@
 ARGS ?=
 
-.PHONY: dev db api-install web-install install lint fmt test web-check migrate seed
+.PHONY: dev db api-install web-install install lint fmt test web-check web-test migrate seed
 
 dev:
 	docker compose up --build
@@ -36,3 +36,6 @@ migrate:
 
 seed:
 	cd api && uv run python -m scripts.seed $(ARGS)
+
+web-test:
+	cd web && pnpm test
