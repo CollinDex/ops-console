@@ -64,7 +64,7 @@ Sections, in this order:
 - **`docs/deploy.md`** also covers the smoke-test checklist for the live URL (login, overview, filter URL, retry, simulate, mobile).
 
 ## 5. Final end-to-end pass
-On a **fresh clone** (`git clone` into a temporary folder, then `docker compose up --build`), run the PRD demo script step by step:
+On a **fresh clone** (`git clone` into a temporary folder, then `docker compose up --build`), run the PRD demo script step by step. Stop the dev stack first (`docker compose down` in the repo): the fresh clone binds the same host ports (5433, 8000, 3000).
 1. Explain the one-line why (README).
 2. Sign in as viewer: only Overview and Providers are visible, and no personal data. Then sign in as ops admin.
 3. Overview: walk the funnel, then click a needs-attention business.
@@ -87,6 +87,7 @@ Record pass or fail per step in the report, with screenshots saved in `docs/scre
 ## Verify
 ```bash
 make lint && make test && make web-check && make web-test
+docker compose down   # free ports 5433/8000/3000 for the fresh clone
 rm -rf /tmp/credisure-fresh && git clone . /tmp/credisure-fresh && cd /tmp/credisure-fresh && docker compose up --build -d
 # run the 8-step demo at http://localhost:3000, then:
 docker compose down -v && cd - && rm -rf /tmp/credisure-fresh
