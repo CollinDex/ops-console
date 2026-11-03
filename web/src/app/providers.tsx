@@ -19,7 +19,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <TooltipProvider>
             <TopProgressBar />
             {children}
-            <Toaster richColors closeButton position="top-right" />
+            <Toaster richColors closeButton position="bottom-right" />
           </TooltipProvider>
         </AuthProvider>
       </QueryClientProvider>
