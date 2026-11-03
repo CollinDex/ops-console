@@ -97,3 +97,17 @@ export async function apiBlob(path: string, init?: ApiInit): Promise<Blob> {
   const res = await request(path, init);
   return res.blob();
 }
+
+export type Download = { blob: Blob; filename: string | null; truncated: boolean };
+
+/** A file download with the auth header. The filename comes from the server's Content-Disposition. */
+export async function apiDownload(path: string, init?: ApiInit): Promise<Download> {
+  const res = await request(path, init);
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
+  return {
+    blob: await res.blob(),
+    filename: match ? decodeURIComponent(match[1]) : null,
+    truncated: res.headers.get("X-Truncated") === "true",
+  };
+}
