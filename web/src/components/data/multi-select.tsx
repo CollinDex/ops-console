@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,6 +31,7 @@ export function MultiSelect({
   searchable?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
   const toggle = (value: string) =>
     onChange(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
 
@@ -45,8 +46,18 @@ export function MultiSelect({
           <ChevronDown className="text-muted-foreground" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-60 p-0">
-        <Command>
+      <PopoverContent
+        align="start"
+        className="w-60 p-0"
+        onOpenAutoFocus={(e) => {
+          // Without a search box, focus the list itself so arrow keys and Enter reach cmdk.
+          if (!searchable) {
+            e.preventDefault();
+            listRef.current?.focus();
+          }
+        }}
+      >
+        <Command ref={listRef} tabIndex={-1} className="outline-none">
           {searchable && <CommandInput placeholder={`Search ${label.toLowerCase()}`} />}
           <CommandList>
             <CommandEmpty>No matches.</CommandEmpty>
