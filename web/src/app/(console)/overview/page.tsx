@@ -1,5 +1,5 @@
-import { OverviewCount } from "@/features/overview/overview-count";
+import { OverviewPage } from "@/features/overview/overview-page";
 
-export default function OverviewPage() {
-  return <OverviewCount />;
+export default function Page() {
+  return <OverviewPage />;
 }

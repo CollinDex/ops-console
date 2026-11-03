@@ -1,4 +1,11 @@
-import { CircleCheck, CircleX, Clock, type LucideIcon } from "lucide-react";
+import {
+  CircleCheck,
+  CircleHelp,
+  CircleX,
+  Clock,
+  TriangleAlert,
+  type LucideIcon,
+} from "lucide-react";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { components } from "@/lib/api-types";
@@ -72,5 +79,34 @@ export function CheckBadge({ type, status }: { type: CheckType; status: CheckSta
         {CHECK_LABEL[type]}: {m.label}
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+export type ProviderState = "up" | "slow" | "down" | "unknown";
+
+const PROVIDER_META: Record<
+  ProviderState,
+  { label: string; icon: LucideIcon; text: string; bg: string }
+> = {
+  up: { label: "Up", icon: CircleCheck, text: "text-success", bg: "bg-success/10" },
+  slow: { label: "Slow", icon: TriangleAlert, text: "text-warning", bg: "bg-warning/10" },
+  down: { label: "Down", icon: CircleX, text: "text-danger", bg: "bg-danger/10" },
+  unknown: { label: "Unknown", icon: CircleHelp, text: "text-muted-foreground", bg: "bg-muted" },
+};
+
+export function ProviderStatusBadge({ status }: { status: ProviderState }) {
+  const m = PROVIDER_META[status];
+  const Icon = m.icon;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+        m.bg,
+        m.text,
+      )}
+    >
+      <Icon className="size-3.5" aria-hidden="true" />
+      {m.label}
+    </span>
   );
 }

@@ -47,3 +47,14 @@ export function initials(name: string): string {
   const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
   return (first + last).toUpperCase();
 }
+
+const shortDateFmt = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "UTC",
+  day: "numeric",
+  month: "short",
+});
+
+/** "17 Aug" from a date-only string such as "2026-08-17" (no timezone shift). */
+export function formatShortDate(dateOnly: string): string {
+  return shortDateFmt.format(new Date(`${dateOnly}T00:00:00Z`));
+}
