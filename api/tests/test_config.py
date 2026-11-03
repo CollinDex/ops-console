@@ -1,6 +1,6 @@
 import pytest
 
-from app.core.config import Settings, normalise_database_url
+from app.core.config import DEV_JWT_SECRET, Settings, normalise_database_url
 
 
 @pytest.mark.parametrize(
@@ -24,3 +24,9 @@ def test_cors_origins_accepts_comma_separated_list() -> None:
 def test_cors_origins_accepts_json_list(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("CORS_ORIGINS", '["http://localhost:3000"]')
     assert Settings().cors_origins == ["http://localhost:3000"]
+
+
+def test_prod_refuses_the_dev_jwt_secret() -> None:
+    with pytest.raises(ValueError, match="JWT_SECRET"):
+        Settings(env="prod", jwt_secret=DEV_JWT_SECRET)
+    assert Settings(env="prod", jwt_secret="x" * 32).env == "prod"

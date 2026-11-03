@@ -4,8 +4,10 @@ import json
 from functools import lru_cache
 from typing import Annotated, Any, Literal
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+DEV_JWT_SECRET = "dev-only-change-me"  # noqa: S105
 
 
 def normalise_database_url(url: str) -> str:
@@ -23,7 +25,7 @@ class Settings(BaseSettings):
     test_database_url: str = (
         "postgresql+psycopg://credisure:credisure@localhost:5433/credisure_test"
     )
-    jwt_secret: str = "dev-only-change-me"  # noqa: S105
+    jwt_secret: str = DEV_JWT_SECRET
     jwt_ttl_minutes: int = 60
     bcrypt_rounds: int = 12
     # Accepts a JSON list or a comma-separated string (what hosting dashboards usually take).
@@ -46,6 +48,12 @@ class Settings(BaseSettings):
                 return json.loads(text)
             return [o.strip().rstrip("/") for o in text.split(",") if o.strip()]
         return value
+
+    @model_validator(mode="after")
+    def _require_real_secret_in_prod(self) -> "Settings":
+        if self.env == "prod" and self.jwt_secret == DEV_JWT_SECRET:
+            raise ValueError("JWT_SECRET must be set when ENV=prod")
+        return self
 
 
 @lru_cache
