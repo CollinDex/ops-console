@@ -88,10 +88,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         scheduleExpiry(stored.expiresAt);
       })
       .catch(() => {
-        // A 401 is handled by the api-client hook. Anything else leaves us signed out.
+        // A 401 is handled by the api-client hook (which clears the token). For a network or
+        // server error we keep the stored token, so a reload once the API is back restores it.
         if (cancelled) return;
-        tokenStore.clear();
-        setState({ status: "anonymous", user: null, redirecting: false });
+        setState((prev) =>
+          prev.redirecting ? prev : { status: "anonymous", user: null, redirecting: false },
+        );
       });
     return () => {
       cancelled = true;

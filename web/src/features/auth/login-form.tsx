@@ -65,7 +65,7 @@ const DEMOS: {
 
 export function LoginPanel() {
   return (
-    <div className="bg-primary text-primary-foreground hidden flex-col justify-between p-12 lg:flex">
+    <div className="hidden flex-col justify-between bg-[oklch(0.3_0.08_260)] p-12 text-white lg:flex">
       <div className="flex items-center gap-2 text-lg font-semibold">
         <ShieldHalf className="size-6" aria-hidden="true" />
         CrediSure
@@ -73,12 +73,12 @@ export function LoginPanel() {
       <div className="max-w-md space-y-8">
         <div className="space-y-3">
           <h1 className="text-3xl font-semibold tracking-tight">CrediSure Ops Console</h1>
-          <p className="text-primary-foreground/80 text-lg">
+          <p className="text-lg text-white/80">
             See which businesses are stuck in onboarding, why, and whether it&apos;s us or a
             provider.
           </p>
         </div>
-        <ul className="text-primary-foreground/90 space-y-4 text-sm">
+        <ul className="space-y-4 text-sm text-white/90">
           <li className="flex items-center gap-3">
             <ShieldCheck className="size-5 shrink-0" aria-hidden="true" />4 verification checks
             tracked per business
@@ -93,7 +93,7 @@ export function LoginPanel() {
           </li>
         </ul>
       </div>
-      <p className="text-primary-foreground/60 text-xs">Internal tool</p>
+      <p className="text-xs text-white/60">Internal tool</p>
     </div>
   );
 }

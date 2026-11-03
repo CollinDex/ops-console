@@ -19,6 +19,7 @@ export function makeQueryClient(): QueryClient {
         const requestId = error instanceof ApiError ? error.requestId : undefined;
         toast.error(error.message, {
           id: JSON.stringify(query.queryKey),
+          duration: 10_000,
           description: requestId ? `Ref ${requestId.slice(0, 8)}` : undefined,
           action: { label: "Retry", onClick: () => void query.fetch() },
         });
