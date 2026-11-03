@@ -1,6 +1,7 @@
 "use client";
 
 import { RotateCw, TriangleAlert } from "lucide-react";
+import { useRef } from "react";
 
 import { ScorePill } from "@/components/data/score-pill";
 import { StageBadge } from "@/components/data/stage-badge";
@@ -173,6 +174,9 @@ function DrawerBody({ business }: { business: BusinessDetail }) {
 
 export function BusinessDrawer({ id, onClose }: { id: string | undefined; onClose: () => void }) {
   const query = useBusiness(id);
+  // `id` is already gone from the URL by the time the close animation hands focus back.
+  const lastId = useRef<string | undefined>(id);
+  if (id) lastId.current = id;
   const notFound = query.error instanceof ApiError && query.error.status === 404;
 
   return (
@@ -181,7 +185,9 @@ export function BusinessDrawer({ id, onClose }: { id: string | undefined; onClos
         className="w-full data-[side=right]:w-full data-[side=right]:sm:max-w-lg"
         onCloseAutoFocus={(e) => {
           // No trigger element, so hand focus back to the row that opened the drawer.
-          const row = id ? document.querySelector<HTMLElement>(`[data-row-focus="${id}"]`) : null;
+          const row = lastId.current
+            ? document.querySelector<HTMLElement>(`[data-row-focus="${lastId.current}"]`)
+            : null;
           if (row) {
             e.preventDefault();
             row.focus();
