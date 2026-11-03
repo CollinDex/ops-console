@@ -17,7 +17,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CrediSure Ops Console",
+  title: { default: "CrediSure Ops Console", template: "%s · CrediSure Ops Console" },
   description: "Internal ops dashboard for onboarding, verification and provider health.",
 };
 
