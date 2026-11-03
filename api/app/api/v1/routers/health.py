@@ -11,13 +11,18 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.session import get_db
+from app.schemas.health import HealthOut
 from app.services.providers import ping_summary
 
 router = APIRouter(tags=["health"])
 logger = logging.getLogger(__name__)
 
 
-@router.get("/health")
+@router.get(
+    "/health",
+    response_model=HealthOut,
+    responses={503: {"model": HealthOut, "description": "Database unreachable"}},
+)
 def health(db: Annotated[Session, Depends(get_db)]) -> JSONResponse:
     body: dict[str, Any] = {
         "status": "ok",
