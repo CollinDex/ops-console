@@ -6,7 +6,7 @@ import { useRef } from "react";
 import { ScorePill } from "@/components/data/score-pill";
 import { StageBadge } from "@/components/data/stage-badge";
 import { ErrorState } from "@/components/data/states";
-import { CHECK_ORDER, CheckBadge, STATUS_META } from "@/components/data/status-badges";
+import { CHECK_LABEL, CHECK_ORDER, CheckBadge, STATUS_META } from "@/components/data/status-badges";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -68,10 +68,11 @@ function ChecksSection({ business }: { business: BusinessDetail }) {
                     size="sm"
                     variant="outline"
                     disabled={pending}
+                    aria-label={`Re-run ${CHECK_LABEL[type]} check`}
                     onClick={() => retry(type)}
                   >
                     <RotateCw className={pending ? "animate-spin" : ""} aria-hidden="true" />
-                    {pending ? "Re-running…" : "Re-run"}
+                    {pending ? "Re-running…" : "Re-run check"}
                   </Button>
                 ) : (
                   <Tooltip>
@@ -81,10 +82,10 @@ function ChecksSection({ business }: { business: BusinessDetail }) {
                           size="sm"
                           variant="outline"
                           disabled
-                          aria-label="Re-run (not permitted)"
+                          aria-label={`Re-run ${CHECK_LABEL[type]} check (not permitted)`}
                         >
                           <RotateCw aria-hidden="true" />
-                          Re-run
+                          Re-run check
                         </Button>
                       </span>
                     </TooltipTrigger>
