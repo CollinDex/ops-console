@@ -8,10 +8,21 @@ type Point = ProviderStatus["recent"][number];
 
 /** Latency over the recent pings. Down pings have no latency, so they become red ticks on the baseline. */
 export function Sparkline({ points, current }: { points: Point[]; current: number | null }) {
+  const spanMin =
+    points.length > 1
+      ? Math.max(
+          1,
+          Math.round(
+            (new Date(points[points.length - 1].checked_at).getTime() -
+              new Date(points[0].checked_at).getTime()) /
+              60_000,
+          ),
+        )
+      : 0;
   const label =
     points.length === 0
       ? "No latency data yet"
-      : `Latency over the last ${Math.max(1, Math.round((points.length * 15) / 60))} minutes, ${
+      : `Latency over the last ${spanMin} minutes, ${
           current === null ? "currently down" : `currently ${current} ms`
         }`;
   if (points.length === 0) {
