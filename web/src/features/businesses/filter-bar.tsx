@@ -128,7 +128,7 @@ export function FilterBar({
           value={filters.band ?? ANY}
           onValueChange={(v) => onChange({ band: v === ANY ? undefined : v })}
         >
-          <SelectTrigger aria-label="Score band filter" className="h-8">
+          <SelectTrigger aria-label="Score band filter">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -146,7 +146,7 @@ export function FilterBar({
             onChange({ failed: v === ANY ? undefined : (v as Filters["failed"]) })
           }
         >
-          <SelectTrigger aria-label="Failed check filter" className="h-8">
+          <SelectTrigger aria-label="Failed check filter">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

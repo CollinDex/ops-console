@@ -97,7 +97,7 @@ export function DataTable<T>({
                     <button
                       type="button"
                       onClick={() => toggleSort(col)}
-                      className="hover:text-foreground focus-visible:ring-ring/50 -ml-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 font-medium outline-none focus-visible:ring-2"
+                      className="hover:text-foreground focus-visible:ring-ring/50 -ml-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 font-medium outline-none focus-visible:ring-2 max-sm:min-h-10"
                     >
                       {col.header}
                       <Icon

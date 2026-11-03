@@ -45,7 +45,10 @@ export function ProviderSummary() {
               </li>
             ))}
           </ul>
-          <Link href="/providers" className="text-primary text-sm font-medium hover:underline">
+          <Link
+            href="/providers"
+            className="text-primary inline-flex items-center text-sm font-medium hover:underline max-sm:min-h-10"
+          >
             View providers
           </Link>
         </div>

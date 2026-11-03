@@ -68,7 +68,7 @@ export function HealthDot() {
         <Link
           href="/providers"
           role="status"
-          className="hover:bg-muted focus-visible:ring-ring/60 flex h-8 items-center gap-1.5 rounded-lg px-2 text-sm font-medium outline-none focus-visible:ring-2"
+          className="hover:bg-muted focus-visible:ring-ring/60 flex h-8 items-center gap-1.5 rounded-lg px-2 text-sm font-medium outline-none focus-visible:ring-2 max-sm:h-10 max-sm:min-w-10 max-sm:justify-center"
         >
           <Icon className={cn("size-4 shrink-0", className)} aria-hidden="true" />
           <span className={cn("sr-only sm:not-sr-only", className)}>{label}</span>
