@@ -409,6 +409,33 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** HealthOut */
+        HealthOut: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "degraded" | "down";
+            /**
+             * Db
+             * @enum {string}
+             */
+            db: "ok" | "down";
+            providers: components["schemas"]["HealthProviders"];
+            /** Version */
+            version: string;
+            /** Time */
+            time: string;
+        };
+        /** HealthProviders */
+        HealthProviders: {
+            /** Up */
+            up: number;
+            /** Slow */
+            slow: number;
+            /** Down */
+            down: number;
+        };
         /** IncidentOut */
         IncidentOut: {
             /**
@@ -714,7 +741,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["HealthOut"];
+                };
+            };
+            /** @description Database unreachable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthOut"];
                 };
             };
         };

@@ -7,20 +7,11 @@ import { useEffect, useState } from "react";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api-client";
+import type { components } from "@/lib/api-types";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-/**
- * GET /health has no response_model in the API, so the OpenAPI schema types it as `unknown`.
- * This mirrors the payload documented in design §9 and api/app/routers/health.
- */
-export type HealthResponse = {
-  status: "ok" | "degraded" | "down";
-  db: string;
-  providers?: { up: number; slow: number; down: number };
-  version: string;
-  time: string;
-};
+export type HealthResponse = components["schemas"]["HealthOut"];
 
 type DotState = "checking" | "ok" | "degraded" | "down";
 
