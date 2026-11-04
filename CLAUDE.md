@@ -1,6 +1,6 @@
 # CrediSure Ops Console
 
-An internal ops dashboard for the CrediSure engineering assessment (due Thu 5 Nov 2026, 11:58 WAT). The stack is Next.js 15 + TypeScript + Tailwind + shadcn/ui (`web/`), FastAPI + SQLAlchemy 2 + Alembic (`api/`), and PostgreSQL 16. All data is seeded and fictional.
+An internal ops dashboard for the CrediSure engineering assessment. The stack is Next.js 15 + TypeScript + Tailwind + shadcn/ui (`web/`), FastAPI + SQLAlchemy 2 + Alembic (`api/`), and PostgreSQL 16. All data is seeded and fictional.
 
 ## Source of truth
 - `docs/system-design.md` is the approved design: contracts, data model, error codes and flows. **Don't change it during implementation.** If it seems wrong, record that in your phase report.
